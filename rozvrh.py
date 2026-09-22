@@ -80,7 +80,7 @@ ROZVRH = [
     ("PO", "10:00", "12:00", "MECHcv",  "Cervenka",    "B-11"),
     ("PO", "12:00", "14:00", "MECH",    "Bren",        "B-103"),
     ("PO", "14:00", "16:00", "MAT1",    "Fucik",       "T-101"),
-    ("PO", "16:30", "18:00", "EZB",     "Strobachova", "B-215"),
+    ("PO", "16:30", "18:00", "EZB",     "Strobach.", "B-215"),
     ("PO", "16:00", "18:00", "šerm",    "",            "Vršovice"),
     ("PO", "18:00", "20:00", "CH1cv",   "Babicky",     "B-103"),
 
@@ -100,13 +100,13 @@ ROZVRH = [
     # ---------- ČTVRTEK ----------
     ("ČT", "08:00", "9:30",  "Lezení", "",             "Juliska"),
     ("ČT", "10:00", "12:00", "MAT1",    "Fucik",       "T-101"),
-    ("ČT", "13:00", "17:00", "ZBAF1",   "Vaculin",     "B-215"),
+    ("ČT", "13:00", "17:30", "ZBAF1",   "Vaculin",     "B-215"),
     ("ČT", "18:00", "20:00", "CH1",     "Distler",     "B-103"),
 
     # ---------- PÁTEK ----------
     ("PÁ", "08:00", "10:00", "ZPRO",    "Petrickova",  "T-201"),
     ("PÁ", "14:00", "16:00", "MAM1",    "Bren",        "T-101"),
-    ("PÁ", "16:00", "18:00", "MAM2",    "Heriban",     "T-101"),
+    ("PÁ", "16:00", "17:40", "MAM2",    "Heriban",     "T-101"),
 ]
 
 
@@ -127,16 +127,35 @@ NAZVY_DNU = {
 SIRKA = 1800
 VYSKA = 1050
 
-FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-
+FONT = "/data/data/com.termux/files/usr/share/fonts/TTF/DejaVuSans.ttf"
+FONT_BOLD = "/data/data/com.termux/files/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 
 def f(size, bold=False):
-    return ImageFont.truetype(
-        FONT_BOLD if bold else FONT,
-        size
-    )
+    cesta = FONT_BOLD if bold else FONT
+    return ImageFont.truetype(cesta, size)
 
+def najdi_font(bold=False):
+    nazev = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
+
+    kandidati = [
+        # Termux
+        f"/data/data/com.termux/files/usr/share/fonts/truetype/dejavu/{nazev}",
+
+        # Některé linuxové instalace
+        f"/usr/share/fonts/truetype/dejavu/{nazev}",
+        f"/usr/share/fonts/TTF/{nazev}",
+
+        # Android
+        f"/system/fonts/{nazev}",
+        f"/system/fonts/Roboto-Regular.ttf" if not bold else
+        f"/system/fonts/Roboto-Bold.ttf",
+    ]
+
+    for cesta in kandidati:
+        if Path(cesta).is_file():
+            return cesta
+
+    return None
 
 def minuty(cas):
     h, m = map(int, cas.split(":"))
@@ -157,6 +176,28 @@ def datumy_tyden():
 # ============================================================
 # 7. KONTROLA, ZDA SE PŘEDMĚT KONÁ
 # ============================================================
+
+def zbaF_misto(datum):
+    """Vrátí (adresa, místnost) pro konkrétní termín ZBAF1."""
+    terminy = {
+        date(2026, 9, 24): ("Břehová 7", "215"),
+        date(2026, 10, 1): ("Břehová 7", "215"),
+        date(2026, 10, 8): ("Břehová 7", "215"),
+
+        date(2026, 10, 15): ("Ruská 87", "503"),
+        date(2026, 10, 22): ("Ruská 87", "503"),
+        date(2026, 10, 29): ("Ruská 87", "503"),
+        date(2026, 11, 5): ("Ruská 87", "503"),
+
+        date(2026, 11, 12): ("Ke Karlovu 4", "seminární m."),
+        date(2026, 11, 19): ("Ruská 87", "503"),
+        date(2026, 11, 26): ("Ke Karlovu 4", "seminární m."),
+        date(2026, 12, 3): ("Ke Karlovu 4", "seminární m."),
+        date(2026, 12, 10): ("Ruská 87", "503"),
+        date(2026, 12, 17): ("Ke Karlovu 4", "seminární m."),
+    }
+    return terminy.get(datum, ("", ""))
+
 
 def predmet_se_kona(predmet, datum):
     """
@@ -499,7 +540,13 @@ def vykresli():
     ) in hodiny:
 
         i = DNY.index(den)
+        datum_hodiny = TYDEN_OD + timedelta(days=i)
 
+        # ZBAF1 má místo podle konkrétního týdne.
+        if predmet == "ZBAF1":
+            adresa, zbaF_mistnost = zbaF_misto(datum_hodiny)
+            if adresa:
+                mistnost = f"{adresa}, {zbaF_mistnost}"
 
         # ----------------------------------------------------
         # Y podle dne
@@ -637,7 +684,7 @@ def vykresli():
             bb = d.textbbox(
                 (0, 0),
                 mistnost,
-                font=f(25)
+                font=f(20)
             )
 
             tw = bb[2] - bb[0]
@@ -674,27 +721,13 @@ def vykresli():
 def uloz():
 
     img = vykresli()
-
     stem = f"rozvrh_{TYDEN_OD.isoformat()}"
-
     png = Path(stem + ".png")
-    pdf = Path(stem + ".pdf")
-
-    img.save(
-        png,
-        quality=95
-    )
-
-    img.save(
-        pdf,
-        "PDF",
-        resolution=150
-    )
-
+    
+    img.save(png,quality=95)
+    
     print("Hotovo:")
     print(f"  {png}")
-    print(f"  {pdf}")
-
 
 # ============================================================
 # 11. SPUŠTĚNÍ
