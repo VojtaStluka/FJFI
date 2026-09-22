@@ -1,2 +1,3 @@
 # FJFI
-škola_RT
+*škola*
+všechny radosti ohledně _RT_
