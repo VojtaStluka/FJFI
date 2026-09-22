@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 #
 # Pro běžné používání nastav na None.
 
-TESTOVACI_DATUM = date (2026,12,18)
+TESTOVACI_DATUM = None
 
 
 if TESTOVACI_DATUM is None:
