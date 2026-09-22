@@ -1,60 +1,76 @@
-from datetime import date, timedelta
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 
 # ============================================================
-# 1. NASTAVENÍ KONKRÉTNÍHO TÝDNE
-# ============================================================
-#
-# Tady upravuješ pouze konkrétní týden.
-#
-# TYDEN_OD = první den daného týdne
-#
-# TYDEN:
-#   - "svatek": text svátku, nebo None
-#   - "vynechat": seznam předmětů, které se tento den nekonají
-#
+# 1. URČENÍ AKTUÁLNÍHO TÝDNE
 # ============================================================
 
-TYDEN_OD = date(2026, 10, 5)
+# Pro testování můžeš zadat konkrétní datum.
+# Např.:
+#
+# TESTOVACI_DATUM = date(2026, 11, 18)
+#
+# Pro běžné používání nastav na None.
 
-TYDEN = {
-    "PO": {
-        "svatek": None,
-        "vynechat": ["EZB"],
-    },
+TESTOVACI_DATUM = date (2026,12,18)
 
-    "ÚT": {
-        "svatek": None,
-        "vynechat": [],
-    },
 
-    "ST": {
-        "svatek": None,
-        "vynechat": [],
-    },
+if TESTOVACI_DATUM is None:
+    DNES = datetime.now().date()
+else:
+    DNES = TESTOVACI_DATUM
 
-    "ČT": {
-        "svatek": None,
-        "vynechat": [],
-    },
 
-    "PÁ": {
-        "svatek": None,
-        "vynechat": [],
-    },
+# Pondělí aktuálního týdne
+TYDEN_OD = DNES - timedelta(days=DNES.weekday())
+
+
+
+# ============================================================
+# 2. SVÁTKY
+# ============================================================
+
+SVATKY = {
+    date(2026, 10, 28): "Státní svátek",
+    date(2026, 11, 16): "Děkanské volno",
+    date(2026, 11, 17): "Státní svátek",
 }
 
 
 # ============================================================
-# 2. ZÁKLADNÍ ROZVRH
+# 3. PLATNÉ TERMÍNY EZB
 # ============================================================
-#
-# Tento rozvrh se normálně nemění.
-# Výjimky pro jednotlivé týdny se nastavují výhradně výše.
-#
-# (den, začátek, konec, předmět, vyučující, místnost)
+
+EZB_TERMINY = {
+    date(2026, 9, 21),
+    date(2026, 10, 12),
+    date(2026, 10, 19),
+    date(2026, 11, 2),
+    date(2026, 11, 23),
+    date(2026, 12, 7),
+}
+
+
+# ============================================================
+# 4. PLATNÉ TERMÍNY HEB
+# ============================================================
+
+HEB_TERMINY = {
+    date(2026, 10, 6),
+    date(2026, 10, 20),
+    date(2026, 10, 27),
+    date(2026, 11, 10),
+    date(2026, 11, 24),
+    date(2026, 12, 1),
+    date(2026, 12, 8),
+    date(2026, 12, 15),
+}
+
+
+# ============================================================
+# 5. ZÁKLADNÍ ROZVRH
 # ============================================================
 
 ROZVRH = [
@@ -65,7 +81,7 @@ ROZVRH = [
     ("PO", "12:00", "14:00", "MECH",    "Bren",        "B-103"),
     ("PO", "14:00", "16:00", "MAT1",    "Fucik",       "T-101"),
     ("PO", "16:30", "18:00", "EZB",     "Strobachova", "B-215"),
-    ("PO", "16:00", "18:00", "šerm",  "",      "Vršovice"),
+    ("PO", "16:00", "18:00", "šerm",    "",            "Vršovice"),
     ("PO", "18:00", "20:00", "CH1cv",   "Babicky",     "B-103"),
 
     # ---------- ÚTERÝ ----------
@@ -75,15 +91,14 @@ ROZVRH = [
     ("ÚT", "16:00", "18:00", "MAT1cv",  "Fukova",      "T-209"),
 
     # ---------- STŘEDA ----------
-    ("ST", "08:00", "10:00", "DEF1",    "Jex",         "B-103"),
-    ("ST", "10:00", "12:00", "MECH",    "Bren",        "B-103"),
-    ("ST", "12:00", "14:00", "MAT1cv",  "Fukova",      "T-208"),
-    ("ST", "14:30", "15:30", "Doučování",  "",      "knihovna"),
-    ("ST", "16:00", "19:00", "šerm",  "",      "Vršovice"),
-
+    ("ST", "08:00", "10:00", "DEF1",       "Jex",       "B-103"),
+    ("ST", "10:00", "12:00", "MECH",       "Bren",      "B-103"),
+    ("ST", "12:00", "14:00", "MAT1cv",     "Fukova",    "T-208"),
+    ("ST", "14:30", "15:30", "Doučování",  "",          "knihovna"),
+    ("ST", "16:00", "19:00", "šerm",       "",          "Vršovice"),
 
     # ---------- ČTVRTEK ----------
-    ("ČT", "08:00", "9:30", "Lezení",  "",            "Juliska"),
+    ("ČT", "08:00", "9:30",  "Lezení", "",             "Juliska"),
     ("ČT", "10:00", "12:00", "MAT1",    "Fucik",       "T-101"),
     ("ČT", "13:00", "17:00", "ZBAF1",   "Vaculin",     "B-215"),
     ("ČT", "18:00", "20:00", "CH1",     "Distler",     "B-103"),
@@ -96,7 +111,7 @@ ROZVRH = [
 
 
 # ============================================================
-# 3. VZHLED
+# 6. VZHLED
 # ============================================================
 
 DNY = ["PO", "ÚT", "ST", "ČT", "PÁ"]
@@ -130,7 +145,7 @@ def minuty(cas):
 
 def datumy_tyden():
     """
-    Vrátí datum pro každý den týdne.
+    Vrátí datum pro každý pracovní den aktuálního týdne.
     """
 
     return {
@@ -139,15 +154,39 @@ def datumy_tyden():
     }
 
 
+# ============================================================
+# 7. KONTROLA, ZDA SE PŘEDMĚT KONÁ
+# ============================================================
+
+def predmet_se_kona(predmet, datum):
+    """
+    Určí, zda se daný předmět v konkrétní den koná.
+
+    EZB a HEB mají pevně stanovené termíny.
+    Ostatní předměty se konají podle běžného týdenního rozvrhu.
+    """
+
+    # EZB pouze v platných termínech
+    if predmet == "EZB":
+        return datum in EZB_TERMINY
+
+    # HEB pouze v platných termínech
+    if predmet == "HEB":
+        return datum in HEB_TERMINY
+
+    # Ostatní předměty se řídí běžným rozvrhem
+    return True
+
+
 def platne_hodiny():
     """
-    Vrátí pouze hodiny, které se tento týden skutečně konají.
+    Vrátí pouze hodiny, které se v aktuálním týdnu skutečně konají.
 
-    Předmět se vynechá, pokud je jeho kód uveden
-    v TYDEN[den]["vynechat"].
-
-    Např.:
-        "ÚT": {"svatek": None, "vynechat": ["MAT1cv"]}
+    Zohledňuje:
+    - svátky
+    - pevné termíny EZB
+    - pevné termíny HEB
+    - prioritu EZB před šermem
     """
 
     vysledek = []
@@ -156,19 +195,37 @@ def platne_hodiny():
 
         den, zacatek, konec, predmet, vyucujici, mistnost = hodina
 
-        nastaveni = TYDEN[den]
+        # Datum konkrétního dne
+        index_dne = DNY.index(den)
+        datum = TYDEN_OD + timedelta(days=index_dne)
 
-        # Celý den je svátek
-        if nastaveni["svatek"]:
+        # Svátek – nekoná se nic
+        if datum in SVATKY:
             continue
 
-        # Konkrétní předmět se tento den nekoná
-        if predmet in nastaveni["vynechat"]:
-            continue
+        # EZB pouze v platných termínech
+        if predmet == "EZB":
+            if datum not in EZB_TERMINY:
+                continue
+
+        # HEB pouze v platných termínech
+        elif predmet == "HEB":
+            if datum not in HEB_TERMINY:
+                continue
+
+        # Pokud je v tento den EZB, šerm se nekoná
+        elif predmet == "šerm":
+            if datum in EZB_TERMINY:
+                continue
 
         vysledek.append(hodina)
 
     return vysledek
+
+
+# ============================================================
+# 8. TEXT NA STŘED
+# ============================================================
 
 def text_na_stred(draw, box, text, font, fill="black"):
 
@@ -193,6 +250,10 @@ def text_na_stred(draw, box, text, font, fill="black"):
         fill=fill,
     )
 
+
+# ============================================================
+# 9. VYKRESLENÍ
+# ============================================================
 
 def vykresli():
 
@@ -346,8 +407,6 @@ def vykresli():
 
         y2_den = y1_den + vyska_dne
 
-        nastaveni_dne = TYDEN[den]
-
         datum = TYDEN_OD + timedelta(days=i)
 
 
@@ -384,7 +443,7 @@ def vykresli():
         # Svátek
         # ----------------------------------------------------
 
-        if nastaveni_dne["svatek"] is not None:
+        if datum in SVATKY:
 
             d.rectangle(
                 [
@@ -404,7 +463,7 @@ def vykresli():
                     SIRKA - pravy_okraj,
                     y2_den
                 ],
-                nastaveni_dne["svatek"],
+                SVATKY[datum],
                 f(20, True),
                 "#777777",
             )
@@ -486,24 +545,24 @@ def vykresli():
         # ----------------------------------------------------
 
         barvy = {
-            "ZPSP":   "#A8BCD9",
-            "MECH":   "#F5B7B9",
-            "MECHcv": "#F5B7B9",
-            "MAT1":   "#B7E87D",
-            "MAT1cv": "#B7E87D",
-            "EZB":    "#A8BCD9",
-            "CH1":    "#BCA8C1",
-            "CH1cv":  "#BCA8C1",
-            "ZPRO":   "#E3C486",
-            "ZM1":    "#F5B7B9",
-            "HEB":    "#A8BCD9",
-            "DEF1":   "#F5B7B9",
+            "ZPSP":       "#A8BCD9",
+            "MECH":       "#F5B7B9",
+            "MECHcv":     "#F5B7B9",
+            "MAT1":       "#B7E87D",
+            "MAT1cv":     "#B7E87D",
+            "EZB":        "#A8BCD9",
+            "CH1":        "#BCA8C1",
+            "CH1cv":      "#BCA8C1",
+            "ZPRO":        "#E3C486",
+            "ZM1":         "#F5B7B9",
+            "HEB":         "#A8BCD9",
+            "DEF1":        "#F5B7B9",
             "Doučování":   "#F3CB49",
-            "šerm":   "#728AF5",
-            "ZBAF1":  "#A8BCD9",
-            "MAM1":   "#C9C9C9",
-            "MAM2":   "#C9C9C9",
-            "Lezení": "#00FFFF",
+            "šerm":        "#728AF5",
+            "ZBAF1":       "#A8BCD9",
+            "MAM1":        "#C9C9C9",
+            "MAM2":        "#C9C9C9",
+            "Lezení":      "#00FFFF",
         }
 
         fill = barvy.get(
@@ -608,6 +667,10 @@ def vykresli():
     return img
 
 
+# ============================================================
+# 10. ULOŽENÍ
+# ============================================================
+
 def uloz():
 
     img = vykresli()
@@ -632,6 +695,10 @@ def uloz():
     print(f"  {png}")
     print(f"  {pdf}")
 
+
+# ============================================================
+# 11. SPUŠTĚNÍ
+# ============================================================
 
 if __name__ == "__main__":
     uloz()
