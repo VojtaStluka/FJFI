@@ -16,7 +16,6 @@ from PIL import Image, ImageDraw, ImageFont
 
 TESTOVACI_DATUM = None
 
-
 if TESTOVACI_DATUM is None:
     DNES = datetime.now().date()
 else:
@@ -33,6 +32,7 @@ TYDEN_OD = DNES - timedelta(days=DNES.weekday())
 # ============================================================
 
 SVATKY = {
+    date(2026, 9, 28): "Státní svátek",
     date(2026, 10, 28): "Státní svátek",
     date(2026, 11, 16): "Děkanské volno",
     date(2026, 11, 17): "Státní svátek",
@@ -88,18 +88,18 @@ ROZVRH = [
     ("ÚT", "08:00", "10:00", "ZPRO",    "Petrickova",  "T-101"),
     ("ÚT", "12:00", "14:00", "ZM1",     "Chaloupka",   "B-103"),
     ("ÚT", "14:00", "16:00", "HEB",     "Hornakova",   "B-215"),
-    ("ÚT", "16:00", "18:00", "MAT1cv",  "Fukova",      "T-209"),
+    ("ÚT", "16:00", "18:00", "MAT1cv",  "Fukova",      "T-204"),
 
     # ---------- STŘEDA ----------
     ("ST", "08:00", "10:00", "DEF1",       "Jex",       "B-103"),
     ("ST", "10:00", "12:00", "MECH",       "Bren",      "B-103"),
     ("ST", "12:00", "14:00", "MAT1cv",     "Fukova",    "T-208"),
-    '''("ST", "14:30", "15:30", "Doučování",  "",          "knihovna"),
-    ("ST", "16:00", "19:00", "šerm",       "",          "Vršovice"),'''
+    ("ST", "14:30", "15:30", "Doučování",  "",          "knihovna"),
+    ("ST", "16:00", "19:00", "šerm",       "",          "Vršovice"),
 
     # ---------- ČTVRTEK ----------
-    '''("ČT", "08:00", "9:30",  "Lezení", "",             "Juliska"),
-    '''("ČT", "10:00", "12:00", "MAT1",    "Fucik",       "T-101"),
+    ("ČT", "08:00", "9:30",  "Lezení", "",             "Juliska"),
+    ("ČT", "10:00", "12:00", "MAT1",    "Fucik",       "T-101"),
     ("ČT", "13:00", "17:30", "ZBAF1",   "Vaculin",     "B-215"),
     ("ČT", "18:00", "20:00", "CH1",     "Distler",     "B-103"),
 
