@@ -1,3 +1,3 @@
 # FJFI
-##*škola*
+## *škola*
 Všechny radosti ohledně __RT__
