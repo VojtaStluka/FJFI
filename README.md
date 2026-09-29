@@ -1,3 +1,3 @@
 # FJFI
-*škola*
-všechny radosti ohledně _RT_
+##*škola*
+Všechny radosti ohledně __RT__
